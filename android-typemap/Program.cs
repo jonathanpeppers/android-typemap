@@ -25,12 +25,17 @@ foreach (var path in Directory.GetFiles(inputDirectory, "*dll"))
 }
 
 using var writer = File.CreateText(outputFile);
-writer.WriteLine("Dictionary<string, Type> typeMappings = new () {");
+writer.WriteLine("class TypeMap {");
+writer.WriteLine("\tDictionary<string, Type> typeMappings = new () {");
 foreach (var pair in javaTypes)
 {
-    writer.WriteLine($"\t[\"{pair.Key}\"] = typeof ({pair.Value.FullName}))]");
+    if (pair.Value.GenericParameters.Count > 0)
+        continue;
+
+    writer.WriteLine($"\t\t[\"{pair.Key}\"] = typeof ({pair.Value.FullName.Replace('/', '.')}),");
 }
-writer.WriteLine('}');
+writer.WriteLine("\t};");
+writer.WriteLine("}");
 
 static void AddJavaTypes(Dictionary<string, TypeDefinition> javaTypes, TypeDefinition type)
 {
