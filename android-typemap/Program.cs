@@ -29,10 +29,13 @@ writer.WriteLine("class TypeMap {");
 writer.WriteLine("\tDictionary<string, Type> typeMappings = new () {");
 foreach (var pair in javaTypes)
 {
-    if (pair.Value.GenericParameters.Count > 0)
+    var type = pair.Value;
+    if (type.GenericParameters.Count > 0)
         continue;
-
-    writer.WriteLine($"\t\t[\"{pair.Key}\"] = typeof ({pair.Value.FullName.Replace('/', '.')}),");
+    var visiblity = type.Attributes & TypeAttributes.VisibilityMask;
+    if (visiblity != TypeAttributes.Public && visiblity != TypeAttributes.NestedPublic)
+        continue;
+    writer.WriteLine($"\t\t[\"{pair.Key}\"] = typeof ({type.FullName.Replace('/', '.')}),");
 }
 writer.WriteLine("\t};");
 writer.WriteLine("}");
