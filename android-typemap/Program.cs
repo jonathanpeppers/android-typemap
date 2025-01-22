@@ -2,14 +2,15 @@
 using Java.Interop.Tools.JavaCallableWrappers;
 using Mono.Cecil;
 
-var folder = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location)!, "..", "..", "..", "..", "assemblies");
-folder = Path.GetFullPath(folder);
+var top = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location)!, "..", "..", "..", ".."));
+var inputDirectory = Path.Combine(top, "assemblies");
+var outputFile = Path.Combine(top, "Output.cs");
 
 var resolver = new DefaultAssemblyResolver();
-resolver.AddSearchDirectory(folder);
+resolver.AddSearchDirectory(inputDirectory);
 
 var javaTypes = new List<TypeDefinition>();
-foreach (var path in Directory.GetFiles(folder, "*dll"))
+foreach (var path in Directory.GetFiles(inputDirectory, "*dll"))
 {
     Console.WriteLine(path);
 
@@ -21,12 +22,15 @@ foreach (var path in Directory.GetFiles(folder, "*dll"))
             AddJavaTypes(javaTypes, td);
         }
     }
-
-    foreach (var type in javaTypes)
-    {
-        Console.WriteLine($"{type.FullName} -> {ToJniName(type)}");
-    }
 }
+
+using var writer = File.CreateText(outputFile);
+writer.WriteLine("Dictionary<string, Type> typeMappings = new () {");
+foreach (var type in javaTypes)
+{
+    writer.WriteLine($"\t[\"{ToJniName(type)}\"] = typeof ({type.FullName}))]");
+}
+writer.WriteLine('}');
 
 static void AddJavaTypes(List<TypeDefinition> javaTypes, TypeDefinition type)
 {
