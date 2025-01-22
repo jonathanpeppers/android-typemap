@@ -10,7 +10,7 @@ var resolver = new DefaultAssemblyResolver();
 resolver.AddSearchDirectory(inputDirectory);
 
 var javaTypes = new Dictionary<string, TypeDefinition>();
-foreach (var path in Directory.GetFiles(inputDirectory, "*dll"))
+foreach (var path in Directory.GetFiles(inputDirectory, "*.dll"))
 {
     Console.WriteLine(path);
 
