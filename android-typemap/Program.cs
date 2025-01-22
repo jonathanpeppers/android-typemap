@@ -9,7 +9,7 @@ var outputFile = Path.Combine(top, "Output.cs");
 var resolver = new DefaultAssemblyResolver();
 resolver.AddSearchDirectory(inputDirectory);
 
-var javaTypes = new List<TypeDefinition>();
+var javaTypes = new Dictionary<string, TypeDefinition>();
 foreach (var path in Directory.GetFiles(inputDirectory, "*dll"))
 {
     Console.WriteLine(path);
@@ -26,17 +26,18 @@ foreach (var path in Directory.GetFiles(inputDirectory, "*dll"))
 
 using var writer = File.CreateText(outputFile);
 writer.WriteLine("Dictionary<string, Type> typeMappings = new () {");
-foreach (var type in javaTypes)
+foreach (var pair in javaTypes)
 {
-    writer.WriteLine($"\t[\"{ToJniName(type)}\"] = typeof ({type.FullName}))]");
+    writer.WriteLine($"\t[\"{pair.Key}\"] = typeof ({pair.Value.FullName}))]");
 }
 writer.WriteLine('}');
 
-static void AddJavaTypes(List<TypeDefinition> javaTypes, TypeDefinition type)
+static void AddJavaTypes(Dictionary<string, TypeDefinition> javaTypes, TypeDefinition type)
 {
     if (HasJavaPeer(type))
     {
-        javaTypes.Add(type);
+        var key = ToJniName(type) ?? throw new InvalidOperationException("ToJniName returned null");
+        javaTypes.TryAdd(key, type);
     }
 
     if (!type.HasNestedTypes)
